@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/afero"
 )
@@ -48,7 +49,16 @@ func Unarchive(fs afero.Fs, srcFile, dstDir string) (err error) {
 	}
 
 	for _, f := range r.File {
-		err = unarchiveFile(af, f, dstDir)
+		p := filepath.Join(dstDir, f.Name)
+
+		err = unarchiveFile(af, f, p)
+		if err != nil {
+			return
+		}
+
+		// afero.MemMapFs で io.ReadCloser を Close() すると Chtimes() の結果が消えてしまうため (Bug?),
+		// Close() 後に Chtimes() する.
+		err = af.Chtimes(p, time.Now(), f.Modified)
 		if err != nil {
 			return
 		}
@@ -56,7 +66,7 @@ func Unarchive(fs afero.Fs, srcFile, dstDir string) (err error) {
 	return
 }
 
-func unarchiveFile(af afero.Afero, f *ziplib.File, dstDir string) (err error) {
+func unarchiveFile(af afero.Afero, f *ziplib.File, p string) (err error) {
 	var r io.ReadCloser
 	r, err = f.Open()
 	if err != nil {
@@ -64,7 +74,6 @@ func unarchiveFile(af afero.Afero, f *ziplib.File, dstDir string) (err error) {
 	}
 	defer er(r.Close, &err)
 
-	p := filepath.Join(dstDir, f.Name)
 	if f.FileInfo().IsDir() {
 		af.MkdirAll(p, f.Mode())
 	} else {
