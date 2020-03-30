@@ -12,6 +12,16 @@ import (
 )
 
 // Unarchive unarchive srcFile to dstDir
+//
+// srcFile (a.zip) の構成が以下のとき, dstDir/ に以下のように展開する.
+//
+// a.zip
+// |- x.txt
+// :
+//
+// dstDir/
+// |- x.txt
+// :
 func Unarchive(fs afero.Fs, srcFile, dstDir string) (err error) {
 	af := afero.Afero{Fs: fs}
 
