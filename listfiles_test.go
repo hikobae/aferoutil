@@ -39,6 +39,11 @@ func testListFilesFile(t *testing.T, tc testcase) {
 	af := afero.Afero{Fs: fs}
 
 	af.MkdirAll(tc.root, 0666)
+	defer func() {
+		if err := fs.RemoveAll(tc.root); err != nil {
+			t.Errorf("expected nil, but %v", err)
+		}
+	}()
 
 	for _, file := range tc.files {
 		p := filepath.Join(tc.root, file)
