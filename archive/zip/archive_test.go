@@ -32,7 +32,7 @@ var archiveTests = []archiveTest{
 		files: []archiveTestFile{
 			{
 				name:     "a.txt",
-				modified: time.Date(2020, 3, 30, 8, 14, 37, 318562300, time.FixedZone("JST", 9*60*60)),
+				modified: time.Date(2020, 3, 30, 8, 14, 37, 0, time.Local),
 				content:  []byte("this is test"),
 			},
 		},
@@ -72,6 +72,9 @@ func testArchiveFile(t *testing.T, fs afero.Fs, tc archiveTest) {
 		p := filepath.Join(tc.srcDir, file.name)
 		if err := af.WriteFile(p, file.content, file.mode); err != nil {
 			t.Fatalf("fail to WriteFile(%q): %v", p, err)
+		}
+		if err := af.Chtimes(p, time.Now(), file.modified.In(time.Local)); err != nil {
+			t.Fatalf("fail to Chtimes(%q): %v", p, err)
 		}
 	}
 
@@ -114,7 +117,6 @@ func testArchivedFile(t *testing.T, fs afero.Fs, tc archiveTest, file *ziplib.Fi
 		}
 	}()
 
-	t.Log(file.Name)
 	if file.FileInfo().IsDir() {
 		return
 	}
@@ -134,6 +136,12 @@ func testArchivedFile(t *testing.T, fs afero.Fs, tc archiveTest, file *ziplib.Fi
 
 	if bytes.Compare(found.content, buf) != 0 {
 		t.Errorf("expected %v, but %v", found.content, buf)
+		return
+	}
+
+	modified := found.modified.In(time.Local)
+	if !file.Modified.Equal(modified) {
+		t.Errorf("expected %v, but %v", found.modified, file.Modified)
 		return
 	}
 }

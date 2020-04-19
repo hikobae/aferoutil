@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/afero"
 )
@@ -66,6 +67,7 @@ func Archive(fs afero.Fs, srcDir, dstFile string) (err error) {
 		}
 
 		header.Name = filepath.ToSlash(rel)
+		header.Modified = info.ModTime().In(time.Local)
 
 		if info.IsDir() {
 			header.Name += "/"
