@@ -57,10 +57,14 @@ func Archive(fs afero.Fs, srcDir, dstFile string) (err error) {
 		}
 
 		var rel string
-		rel, err = filepath.Rel(path, srcDir)
+		rel, err = filepath.Rel(srcDir, path)
 		if err != nil {
 			return err
 		}
+		if rel == "." || rel == ".." {
+			return
+		}
+
 		header.Name = filepath.ToSlash(rel)
 
 		if info.IsDir() {
